@@ -48,6 +48,28 @@
       color: var(--muted);
       font-size: 1.08rem;
     }
+    .contact {
+      display: inline-block;
+      margin-top: 1.5rem;
+      padding: 0.7rem 1.35rem;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      letter-spacing: 0.01em;
+      box-shadow: 0 0 0 1px rgba(143, 188, 143, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .contact:hover,
+    .contact:focus-visible {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+      outline: none;
+    }
     footer {
       margin-top: 2.5rem;
       color: var(--muted);
@@ -105,6 +127,9 @@
     <p class="eyebrow">Far Future Solutions LLC</p>
     <h1>Building toward what comes next.</h1>
     <p>Applied systems work from Ukiah, California.</p>
+    <p>
+      <a class="contact" href="mailto:paul@farfuturesolutions.com">Contact</a>
+    </p>
     <div class="hit-counter" aria-label="Visit counter">
       <span class="label">You are visitor #</span>
       <span class="digits" id="hit-digits" aria-live="polite"></span>
