@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Egg Man · Far Future Solutions</title>
+  <meta name="description" content="Feed the egg man. A small, unofficial snack break." />
+  <meta name="robots" content="noindex" />
+  <meta name="theme-color" content="#0f1410" />
+  <style>
+    :root {
+      --bg: #0f1410;
+      --fg: #e8efe6;
+      --muted: #9aab96;
+      --accent: #8fbc8f;
+      --ink: #1c241c;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(ellipse at 20% 0%, #1c2a1c 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 80%, #1a1f2a 0%, transparent 45%),
+        var(--bg);
+      color: var(--fg);
+      line-height: 1.45;
+      text-align: center;
+      padding:
+        max(0.85rem, env(safe-area-inset-top))
+        max(1rem, env(safe-area-inset-right))
+        max(0.85rem, env(safe-area-inset-bottom))
+        max(1rem, env(safe-area-inset-left));
+      overflow: hidden;
+    }
+    .wrap {
+      width: min(38rem, 100%);
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.2rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(1.35rem, 4vw, 1.7rem);
+      font-weight: 650;
+      letter-spacing: -0.02em;
+    }
+    .back {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+    }
+    .back:hover { color: var(--accent); }
+    .back:focus-visible,
+    .feed:focus-visible,
+    .again:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .flavor {
+      margin: 0.55rem 0 0;
+      min-height: 2.7em;
+      color: var(--muted);
+      font-size: 0.98rem;
+    }
+    .stage {
+      position: relative;
+      flex: 1;
+      min-height: 200px;
+      display: grid;
+      place-items: center;
+    }
+    .stage.frenzy { animation: shake 0.18s linear; }
+    @keyframes shake {
+      25% { transform: translateX(-2px); }
+      75% { transform: translateX(2px); }
+    }
+    .feed {
+      appearance: none;
+      background: none;
+      border: 0;
+      padding: 0.25rem;
+      margin: 0;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+      touch-action: manipulation;
+      user-select: none;
+      border-radius: 46% 46% 42% 42%;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .feed:disabled { cursor: default; }
+    .bob { display: block; animation: bob 2.6s ease-in-out infinite; }
+    @keyframes bob {
+      50% { transform: translateY(-6px); }
+    }
+    body.won .bob { animation: none; }
+    .sprite {
+      display: block;
+      width: min(260px, 76vw);
+      transform: scale(var(--grow, 1));
+      transform-origin: 50% 88%;
+      transition: transform 0.35s ease, width 0.35s ease;
+    }
+    .sprite svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .sprite .front { aspect-ratio: 220 / 250; }
+    .sprite .rear { display: none; aspect-ratio: 380 / 250; }
+    .sprite.nomming { animation: nom 0.32s ease; }
+    @keyframes nom {
+      0% { transform: scale(var(--grow, 1)); }
+      30% { transform: scale(calc(var(--grow, 1) * 1.07), calc(var(--grow, 1) * 0.9)); }
+      62% { transform: scale(calc(var(--grow, 1) * 0.96), calc(var(--grow, 1) * 1.07)); }
+      100% { transform: scale(var(--grow, 1)); }
+    }
+    .sprite.spinning {
+      transition: none;
+      animation: spin-away 0.28s ease forwards;
+    }
+    @keyframes spin-away {
+      from { transform: scale(var(--grow, 1)) rotateY(0deg); }
+      to { transform: scale(var(--grow, 1)) rotateY(90deg); }
+    }
+    .sprite.revealed {
+      width: min(440px, 96vw);
+      animation: none;
+      transform: scale(var(--grow, 1));
+    }
+    .sprite.revealed .front { display: none; }
+    .sprite.revealed .rear { display: block; }
+    .mouth-open { opacity: 0; }
+    .sprite.nomming .mouth-closed { opacity: 0; }
+    .sprite.nomming .mouth-open { opacity: 1; }
+    .hat, .napkin { display: none; }
+    .eggman[data-hat="1"] .hat,
+    .eggman[data-napkin="1"] .napkin { display: block; }
+    .blush { opacity: 0.45; }
+    .eggman[data-blush="1"] .blush { opacity: 0.95; }
+    .eggman[data-glow="1"] .sprite {
+      filter: drop-shadow(0 0 14px rgba(243, 210, 90, 0.55));
+    }
+    .eggman[data-arms="1"] .arm-l,
+    .eggman[data-arms="1"] .arm-r {
+      transform-box: fill-box;
+      transform-origin: 70% 30%;
+      animation: wave 0.7s ease-in-out infinite;
+    }
+    .eggman[data-arms="1"] .arm-r {
+      transform-origin: 30% 30%;
+      animation-delay: -0.2s;
+    }
+    @keyframes wave {
+      50% { transform: rotate(-18deg); }
+    }
+    .eggman[data-eyes="wide"] .eye { transform: scaleY(1.18); transform-box: fill-box; transform-origin: center; }
+    .sprite.revealed .censor-pop {
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: star-pop 0.5s cubic-bezier(.2, 1.5, .3, 1) both;
+    }
+    @keyframes star-pop {
+      0% { transform: scale(0.2) rotate(-25deg); opacity: 0; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .sprite.revealed .sparkle {
+      animation: twinkle 0.9s ease-in-out infinite;
+    }
+    .sprite.revealed .sparkle.d2 { animation-delay: 0.25s; }
+    .sprite.revealed .sparkle.d3 { animation-delay: 0.5s; }
+    @keyframes twinkle {
+      50% { opacity: 0.2; }
+    }
+    .quip {
+      position: absolute;
+      top: 0.15rem;
+      left: 50%;
+      z-index: 6;
+      transform: translateX(-50%);
+      opacity: 0;
+      background: #1a241c;
+      border: 1px solid rgba(143, 188, 143, 0.45);
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 0.22rem 0.7rem;
+      font-size: 0.85rem;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .quip.show { animation: quip 0.9s ease forwards; }
+    @keyframes quip {
+      0% { opacity: 0; transform: translateX(-50%) translateY(6px); }
+      15% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      78% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .flying-egg, .pop, .crumb { position: absolute; pointer-events: none; z-index: 5; }
+    .flying-egg {
+      width: 22px;
+      height: 28px;
+      border-radius: 50% 50% 50% 50% / 58% 58% 42% 42%;
+      background:
+        radial-gradient(circle at 35% 30%, #fff 0 2px, transparent 3px),
+        radial-gradient(circle at 40% 35%, #fffaf0, #f3e2b8 55%, #e2c98a);
+      box-shadow: inset -3px -2px 0 rgba(160, 120, 50, 0.25);
+    }
+    .pop {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 1rem;
+      animation: rise 0.6s ease forwards;
+    }
+    @keyframes rise {
+      to { transform: translateY(-34px); opacity: 0; }
+    }
+    .crumb {
+      width: 7px;
+      height: 5px;
+      border-radius: 50%;
+      background: #f4ecdf;
+    }
+    .hud {
+      margin: 0.15rem 0 0;
+      display: flex;
+      justify-content: center;
+      align-items: baseline;
+      gap: 0.85rem;
+      font-size: 1.05rem;
+    }
+    .score strong {
+      display: inline-block;
+      min-width: 1.4ch;
+      color: var(--accent);
+      font-size: 1.55rem;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+    .score strong.bump { animation: bump 0.22s ease; }
+    @keyframes bump {
+      40% { transform: scale(1.22); }
+    }
+    .streak {
+      color: #f3d25a;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    .unlocks {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+      justify-content: center;
+      margin: 0.45rem 0 0;
+      padding: 0;
+      list-style: none;
+      min-height: 1.7rem;
+    }
+    .unlocks li {
+      border: 1px solid rgba(143, 188, 143, 0.45);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 0.12rem 0.55rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.03em;
+      animation: pill 0.35s ease;
+    }
+    @keyframes pill {
+      from { transform: scale(0.8); opacity: 0; }
+      to { transform: none; opacity: 1; }
+    }
+    .hint {
+      margin: 0.55rem 0 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+    .result {
+      margin-top: 0.45rem;
+      padding: 0.85rem 1rem 1rem;
+      border-radius: 1rem;
+      background: rgba(22, 34, 24, 0.88);
+      border: 1px solid rgba(143, 188, 143, 0.4);
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32);
+    }
+    .result h2 {
+      margin: 0;
+      font-size: 1.45rem;
+      letter-spacing: -0.02em;
+    }
+    .result p { margin: 0.3rem 0 0; color: var(--muted); }
+    .win-count { color: var(--fg) !important; font-size: 1.05rem; }
+    .win-count strong {
+      color: var(--accent);
+      font-size: 1.7rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .again {
+      margin-top: 0.8rem;
+      padding: 0.65rem 1.3rem;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 650;
+      cursor: pointer;
+      box-shadow: 0 0 0 1px rgba(143, 188, 143, 0.35), 0 8px 24px rgba(0, 0, 0, 0.35);
+      transition: transform 0.15s ease, filter 0.15s ease;
+    }
+    .again:hover,
+    .again:focus-visible {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+    footer {
+      margin-top: 0.7rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+    .sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    @media (max-height: 620px) {
+      body { overflow: auto; height: auto; }
+      .flavor { min-height: 0; }
+      .stage { min-height: 180px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .bob,
+      .arm-l,
+      .arm-r,
+      .sparkle,
+      .censor-pop,
+      .score strong,
+      .unlocks li,
+      .stage.frenzy {
+        animation: none !important;
+      }
+      .sprite { transition: none; }
+      .quip.show {
+        opacity: 1;
+        animation: none;
+        transform: translateX(-50%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="back" href="../">← Back</a>
+      <h1>Egg Man</h1>
+    </header>
+    <p class="flavor" id="flavor">Tap him to feed an egg. He will say when he has had enough.</p>
+    <div class="stage" id="stage">
+      <p class="quip" id="quip"></p>
+      <button class="feed eggman" id="feed" type="button" aria-label="Feed the egg man an egg">
+        <span class="bob">
+          <span class="sprite" id="sprite">
+            <svg class="front" viewBox="0 0 220 250" aria-hidden="true" focusable="false">
+              <ellipse cx="110" cy="228" rx="54" ry="8" fill="#000" opacity="0.28"/>
+              <path class="arm arm-l" d="M58 132 Q30 112 38 84" fill="none" stroke="#243024" stroke-width="12" stroke-linecap="round"/>
+              <path class="arm arm-l" d="M58 132 Q30 112 38 84" fill="none" stroke="#f4ecdf" stroke-width="8" stroke-linecap="round"/>
+              <path class="arm arm-r" d="M162 132 Q190 112 182 84" fill="none" stroke="#243024" stroke-width="12" stroke-linecap="round"/>
+              <path class="arm arm-r" d="M162 132 Q190 112 182 84" fill="none" stroke="#f4ecdf" stroke-width="8" stroke-linecap="round"/>
+              <ellipse cx="86" cy="214" rx="18" ry="9" fill="#e6d5b4" stroke="#243024" stroke-width="2"/>
+              <ellipse cx="136" cy="214" rx="18" ry="9" fill="#dcc8a0" stroke="#243024" stroke-width="2"/>
+              <ellipse cx="110" cy="118" rx="64" ry="80" fill="#f6f1e4" stroke="#2c382c" stroke-width="3"/>
+              <ellipse cx="86" cy="96" rx="22" ry="30" fill="#fff" opacity="0.28"/>
+              <g fill="#e4d7bc">
+                <circle cx="78" cy="108" r="2.2"/>
+                <circle cx="148" cy="96" r="1.7"/>
+                <circle cx="140" cy="146" r="2"/>
+                <circle cx="84" cy="156" r="1.5"/>
+              </g>
+              <ellipse class="blush" cx="68" cy="132" rx="9" ry="5.5" fill="#e7a3a8"/>
+              <ellipse class="blush" cx="152" cy="132" rx="9" ry="5.5" fill="#e7a3a8"/>
+              <ellipse class="eye" cx="88" cy="114" rx="8" ry="10" fill="#1c241c"/>
+              <ellipse class="eye" cx="132" cy="114" rx="8" ry="10" fill="#1c241c"/>
+              <circle cx="90.6" cy="110" r="2.5" fill="#fff"/>
+              <circle cx="134.6" cy="110" r="2.5" fill="#fff"/>
+              <path class="mouth-closed" d="M96 142 Q110 156 124 142" fill="none" stroke="#1c241c" stroke-width="3" stroke-linecap="round"/>
+              <g class="mouth-open">
+                <ellipse cx="110" cy="148" rx="11" ry="9" fill="#2a211c"/>
+                <ellipse cx="110" cy="152" rx="6" ry="3.2" fill="#e07a86"/>
+              </g>
+              <ellipse class="mouth-target" cx="110" cy="146" rx="2" ry="2" fill="none"/>
+              <g class="napkin">
+                <path d="M90 158 Q110 166 134 156" fill="none" stroke="#f7f4ee" stroke-width="5" stroke-linecap="round"/>
+                <path d="M98 160 L94 202 Q112 210 130 200 L124 158 Z" fill="#f7f4ee" stroke="#d5ccbe" stroke-width="1.5"/>
+                <path d="M112 166 L109 198" fill="none" stroke="#e3d9cb" stroke-width="1.5"/>
+              </g>
+              <g class="hat">
+                <path d="M110 28 L92 70 L128 70 Z" fill="#8fbc8f" stroke="#243024" stroke-width="2.5" stroke-linejoin="round"/>
+                <rect x="90" y="66" width="40" height="8" rx="2" fill="#f3d25a" stroke="#243024" stroke-width="2"/>
+                <circle cx="110" cy="26" r="5.5" fill="#f3d25a" stroke="#243024" stroke-width="2"/>
+              </g>
+            </svg>
+            <svg class="rear" viewBox="0 0 380 250" aria-hidden="true" focusable="false">
+              <ellipse cx="200" cy="214" rx="124" ry="12" fill="#000" opacity="0.3"/>
+              <g transform="translate(86 206) rotate(66)">
+                <path d="M-52 -108 Q-86 -78 -76 -28" fill="none" stroke="#243024" stroke-width="14" stroke-linecap="round"/>
+                <path d="M-52 -108 Q-86 -78 -76 -28" fill="none" stroke="#f4ecdf" stroke-width="9" stroke-linecap="round"/>
+                <path d="M52 -104 Q84 -74 74 -26" fill="none" stroke="#243024" stroke-width="14" stroke-linecap="round"/>
+                <path d="M52 -104 Q84 -74 74 -26" fill="none" stroke="#f4ecdf" stroke-width="9" stroke-linecap="round"/>
+                <ellipse cx="-18" cy="-30" rx="20" ry="11" fill="#e6d5b4" stroke="#243024" stroke-width="2.5"/>
+                <ellipse cx="24" cy="-26" rx="20" ry="11" fill="#dcc8a0" stroke="#243024" stroke-width="2.5"/>
+                <ellipse cx="0" cy="-104" rx="68" ry="82" fill="#f6f1e4" stroke="#2c382c" stroke-width="3.5"/>
+                <ellipse cx="-16" cy="-128" rx="26" ry="32" fill="#fff" opacity="0.2"/>
+                <g class="censor" transform="translate(0 -78)">
+                  <g transform="rotate(-66)">
+                    <g class="censor-pop">
+                      <path d="M-11 -8 Q-18 0 -11 8" fill="none" stroke="#c4a574" stroke-width="2.3" stroke-linecap="round"/>
+                      <path d="M11 -8 Q18 0 11 8" fill="none" stroke="#c4a574" stroke-width="2.3" stroke-linecap="round"/>
+                      <path d="M0 -18 L3.6 -3.6 L18 0 L3.6 3.6 L0 18 L-3.6 3.6 L-18 0 L-3.6 -3.6 Z" fill="#f3d25a" stroke="#243024" stroke-width="1.5"/>
+                      <path d="M0 -7 L1.5 -1.5 L7 0 L1.5 1.5 L0 7 L-1.5 1.5 L-7 0 L-1.5 -1.5 Z" fill="#fff8d0"/>
+                      <g transform="translate(0 24)">
+                        <rect x="-38" y="-10" width="76" height="18" rx="5" fill="#f3d25a" stroke="#243024" stroke-width="1.5"/>
+                        <text x="0" y="4" text-anchor="middle" font-family="Segoe UI, system-ui, sans-serif" font-size="12" font-weight="700" fill="#1c241c">censored</text>
+                      </g>
+                      <path class="sparkle" transform="translate(34 -24) scale(0.62)" d="M0 -12 L2.4 -2.4 L12 0 L2.4 2.4 L0 12 L-2.4 2.4 L-12 0 L-2.4 -2.4 Z" fill="#f7e7a1"/>
+                      <path class="sparkle d2" transform="translate(-32 -18) scale(0.45)" d="M0 -12 L2.4 -2.4 L12 0 L2.4 2.4 L0 12 L-2.4 2.4 L-12 0 L-2.4 -2.4 Z" fill="#fff7c8"/>
+                      <path class="sparkle d3" transform="translate(28 8) scale(0.4)" d="M0 -12 L2.4 -2.4 L12 0 L2.4 2.4 L0 12 L-2.4 2.4 L-12 0 L-2.4 -2.4 Z" fill="#f3d25a"/>
+                    </g>
+                  </g>
+                </g>
+              </g>
+            </svg>
+          </span>
+        </span>
+      </button>
+    </div>
+    <p class="hud">
+      <span class="score">Eggs fed <strong id="count">0</strong></span>
+      <span class="streak" id="streak" hidden>Streak 2</span>
+    </p>
+    <ul class="unlocks" id="unlocks" aria-label="Unlocks"></ul>
+    <p class="hint" id="hint">Click, tap, or press Space.</p>
+    <section class="result" id="result" hidden aria-live="assertive">
+      <h2>You win</h2>
+      <p>He turns around. A sparkle handles the rest.</p>
+      <p class="win-count">Eggs fed: <strong id="win-eggs">0</strong></p>
+      <button class="again" id="again" type="button">Play again</button>
+    </section>
+    <footer>2026 &copy; Far Future Solutions LLC</footer>
+  </div>
+  <p class="sr" id="live" aria-live="polite"></p>
+  <noscript><p>Feeding time needs JavaScript turned on.</p></noscript>
+  <script>
+    (function () {
+      var flavorLines = [
+        { at: 0, text: "Tap him to feed an egg. He will say when he has had enough." },
+        { at: 1, text: "One egg down. He looks encouraged." },
+        { at: 8, text: "A napkin arrives, uninvited and fully committed." },
+        { at: 16, text: "Cheeks: fully engaged." },
+        { at: 24, text: "The little arms have clocked in." },
+        { at: 32, text: "He found a hat. The hat is also ready." },
+        { at: 40, text: "A golden glow. He still has not called it." }
+      ];
+      var unlockDefs = [
+        { at: 8, name: "Napkin" },
+        { at: 16, name: "Rosy cheeks" },
+        { at: 24, name: "Busy arms" },
+        { at: 32, name: "Party hat" },
+        { at: 40, name: "Yolk glow" }
+      ];
+      var quips = [
+        "Another.",
+        "Still going.",
+        "Nice one.",
+        "Shell and all.",
+        "He nods.",
+        "Keep them coming.",
+        "Round. Gone.",
+        "No notes.",
+        "He saves nothing for later.",
+        "Excellent form."
+      ];
+
+      var feedBtn = document.getElementById("feed");
+      var sprite = document.getElementById("sprite");
+      var stage = document.getElementById("stage");
+      var countEl = document.getElementById("count");
+      var streakEl = document.getElementById("streak");
+      var flavorEl = document.getElementById("flavor");
+      var unlocksEl = document.getElementById("unlocks");
+      var hintEl = document.getElementById("hint");
+      var resultEl = document.getElementById("result");
+      var winEggsEl = document.getElementById("win-eggs");
+      var againBtn = document.getElementById("again");
+      var quipEl = document.getElementById("quip");
+      var liveEl = document.getElementById("live");
+
+      var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var eggs = 0;
+      var target = 1;
+      var streak = 0;
+      var lastFeed = 0;
+      var streakTimer = 0;
+      var quipTimer = 0;
+      var won = false;
+      var winPlayed = false;
+      var shown = {};
+      var flying = 0;
+
+      function rollTarget() {
+        return 1 + Math.floor(Math.random() * 49);
+      }
+
+      function clearBits() {
+        var bits = stage.querySelectorAll(".flying-egg, .pop, .crumb");
+        for (var i = 0; i < bits.length; i++) bits[i].remove();
+        flying = 0;
+      }
+
+      function render() {
+        countEl.textContent = String(eggs);
+        countEl.classList.remove("bump");
+        void countEl.offsetWidth;
+        countEl.classList.add("bump");
+        streakEl.hidden = streak < 2;
+        streakEl.textContent = "Streak " + streak;
+        var line = flavorLines[0].text;
+        for (var i = 0; i < flavorLines.length; i++) {
+          if (eggs >= flavorLines[i].at) line = flavorLines[i].text;
+        }
+        if (!won) flavorEl.textContent = line;
+        var cap = window.innerHeight < 700 ? 1.34 : 1.5;
+        var grow = Math.min(cap, 1 + eggs * 0.01);
+        sprite.style.setProperty("--grow", grow.toFixed(3));
+        if (eggs >= 8) feedBtn.setAttribute("data-napkin", "1");
+        else feedBtn.removeAttribute("data-napkin");
+        if (eggs >= 16) feedBtn.setAttribute("data-blush", "1");
+        else feedBtn.removeAttribute("data-blush");
+        if (eggs >= 24) feedBtn.setAttribute("data-arms", "1");
+        else feedBtn.removeAttribute("data-arms");
+        if (eggs >= 32) feedBtn.setAttribute("data-hat", "1");
+        else feedBtn.removeAttribute("data-hat");
+        if (eggs >= 40) feedBtn.setAttribute("data-glow", "1");
+        else feedBtn.removeAttribute("data-glow");
+        if (streak >= 4) feedBtn.setAttribute("data-eyes", "wide");
+        else feedBtn.removeAttribute("data-eyes");
+        for (var u = 0; u < unlockDefs.length; u++) {
+          var item = unlockDefs[u];
+          if (eggs >= item.at && !shown[item.name]) {
+            shown[item.name] = true;
+            var li = document.createElement("li");
+            li.textContent = item.name;
+            unlocksEl.appendChild(li);
+          }
+        }
+      }
+
+      function say(text) {
+        quipEl.textContent = text;
+        quipEl.classList.remove("show");
+        void quipEl.offsetWidth;
+        quipEl.classList.add("show");
+        window.clearTimeout(quipTimer);
+        quipTimer = window.setTimeout(function () {
+          quipEl.classList.remove("show");
+        }, reduce ? 1200 : 880);
+      }
+
+      function chomp() {
+        sprite.classList.remove("nomming");
+        void sprite.offsetWidth;
+        sprite.classList.add("nomming");
+        window.setTimeout(function () {
+          sprite.classList.remove("nomming");
+        }, 320);
+      }
+
+      function floatPlus(x, y) {
+        var pop = document.createElement("span");
+        pop.className = "pop";
+        pop.textContent = "+1";
+        pop.style.left = x + "px";
+        pop.style.top = y + "px";
+        stage.appendChild(pop);
+        window.setTimeout(function () { pop.remove(); }, 650);
+      }
+
+      function spitCrumbs(x, y) {
+        if (reduce) return;
+        for (var i = 0; i < 3; i++) {
+          var crumb = document.createElement("span");
+          crumb.className = "crumb";
+          crumb.style.left = x + "px";
+          crumb.style.top = y + "px";
+          stage.appendChild(crumb);
+          var dx = (i - 1) * 18 + (Math.random() * 10 - 5);
+          var dy = 16 + Math.random() * 18;
+          if (crumb.animate) {
+            crumb.animate(
+              [
+                { transform: "translate(0,0)", opacity: 1 },
+                { transform: "translate(" + dx + "px," + dy + "px)", opacity: 0 }
+              ],
+              { duration: 420, easing: "ease-out", fill: "forwards" }
+            );
+          }
+          window.setTimeout(function (node) { node.remove(); }, 460, crumb);
+        }
+      }
+
+      function launchEgg(clientX, clientY) {
+        var rect = stage.getBoundingClientRect();
+        var mouth = sprite.querySelector(".mouth-target");
+        var mr = mouth.getBoundingClientRect();
+        var x = clientX == null ? rect.width / 2 : clientX - rect.left;
+        var y = clientY == null ? rect.height - 18 : clientY - rect.top;
+        var mx = mr.left + mr.width / 2 - rect.left;
+        var my = mr.top + mr.height / 2 - rect.top;
+        if (clientX == null || Math.abs(mx - x) + Math.abs(my - y) < 28) {
+          x = mx;
+          y = Math.min(rect.height - 12, my + 78);
+        }
+        if (reduce || flying > 24) {
+          chomp();
+          floatPlus(mx, my);
+          return;
+        }
+        flying += 1;
+        var egg = document.createElement("span");
+        egg.className = "flying-egg";
+        egg.style.left = x + "px";
+        egg.style.top = y + "px";
+        stage.appendChild(egg);
+        var dx = mx - x;
+        var dy = my - y;
+        var finished = false;
+        function arrive() {
+          if (finished) return;
+          finished = true;
+          flying = Math.max(0, flying - 1);
+          egg.remove();
+          chomp();
+          floatPlus(mx, my);
+          spitCrumbs(mx, my + 8);
+        }
+        if (!egg.animate) {
+          arrive();
+          return;
+        }
+        var duration = streak >= 8 ? 150 : streak >= 4 ? 210 : 260;
+        var anim = egg.animate(
+          [
+            { transform: "translate(-50%, -50%) scale(1)", opacity: 1 },
+            { transform: "translate(calc(-50% + " + dx + "px), calc(-50% + " + dy + "px)) scale(0.15) rotate(30deg)", opacity: 0.9 }
+          ],
+          { duration: duration, easing: "cubic-bezier(.2,.7,.2,1)", fill: "forwards" }
+        );
+        anim.onfinish = arrive;
+      }
+
+      function reveal() {
+        sprite.classList.remove("spinning");
+        sprite.classList.remove("nomming");
+        sprite.classList.add("revealed");
+        document.body.classList.add("won");
+        stage.classList.remove("frenzy");
+        streakEl.hidden = true;
+        flavorEl.textContent = "That's the punchline.";
+        hintEl.hidden = true;
+        winEggsEl.textContent = String(eggs);
+        resultEl.hidden = false;
+        liveEl.textContent = "You win. Eggs fed: " + eggs + ". He turns around. A sparkle handles the rest.";
+        againBtn.focus();
+      }
+
+      function beginWin() {
+        if (winPlayed) return;
+        winPlayed = true;
+        window.clearTimeout(streakTimer);
+        sprite.classList.remove("nomming");
+        feedBtn.disabled = true;
+        if (reduce) {
+          reveal();
+          return;
+        }
+        sprite.classList.add("spinning");
+        window.setTimeout(reveal, 280);
+      }
+
+      function feed(event) {
+        if (won) return;
+        var now = performance.now();
+        if (now - lastFeed < 520) streak += 1;
+        else streak = 1;
+        lastFeed = now;
+        window.clearTimeout(streakTimer);
+        streakTimer = window.setTimeout(function () {
+          streak = 0;
+          streakEl.hidden = true;
+          feedBtn.removeAttribute("data-eyes");
+        }, 700);
+        eggs += 1;
+        if (eggs >= target) {
+          won = true;
+          eggs = target;
+        }
+        render();
+        if (eggs === 1 || eggs % 10 === 0) {
+          liveEl.textContent = eggs + (eggs === 1 ? " egg fed." : " eggs fed.");
+        }
+        var originX = null;
+        var originY = null;
+        if (event && event.detail !== 0 && typeof event.clientX === "number") {
+          originX = event.clientX;
+          originY = event.clientY;
+        }
+        launchEgg(originX, originY);
+        if (streak >= 10) say("Speed eating.");
+        else if (streak === 5) say("That is a tempo.");
+        else say(quips[Math.floor(Math.random() * quips.length)]);
+        if (streak >= 5 && streak % 5 === 0 && !reduce) {
+          stage.classList.remove("frenzy");
+          void stage.offsetWidth;
+          stage.classList.add("frenzy");
+        }
+        if (won) window.setTimeout(beginWin, reduce ? 0 : 340);
+      }
+
+      function startRound() {
+        eggs = 0;
+        target = rollTarget();
+        streak = 0;
+        lastFeed = 0;
+        won = false;
+        winPlayed = false;
+        shown = {};
+        window.clearTimeout(streakTimer);
+        window.clearTimeout(quipTimer);
+        clearBits();
+        unlocksEl.textContent = "";
+        quipEl.textContent = "";
+        quipEl.classList.remove("show");
+        sprite.classList.remove("revealed");
+        sprite.classList.remove("spinning");
+        sprite.classList.remove("nomming");
+        document.body.classList.remove("won");
+        stage.classList.remove("frenzy");
+        feedBtn.disabled = false;
+        feedBtn.removeAttribute("data-napkin");
+        feedBtn.removeAttribute("data-blush");
+        feedBtn.removeAttribute("data-arms");
+        feedBtn.removeAttribute("data-hat");
+        feedBtn.removeAttribute("data-glow");
+        feedBtn.removeAttribute("data-eyes");
+        hintEl.hidden = false;
+        resultEl.hidden = true;
+        liveEl.textContent = "";
+        render();
+      }
+
+      feedBtn.addEventListener("click", function (event) {
+        feed(event);
+      });
+
+      feedBtn.addEventListener("keydown", function (event) {
+        if (event.code === "Space" || event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          feed(null);
+        }
+      });
+
+      document.addEventListener("keydown", function (event) {
+        var typed = event.code === "Space" || event.key === "Enter" || event.key === " ";
+        if (!typed) return;
+        var el = document.activeElement;
+        if (el && (el.tagName === "A" || el.id === "again" || el === feedBtn)) return;
+        if (won) return;
+        event.preventDefault();
+        feed(null);
+      });
+
+      againBtn.addEventListener("click", function () {
+        startRound();
+        feedBtn.focus();
+      });
+
+      startRound();
+    })();
+  </script>
+</body>
+</html>
