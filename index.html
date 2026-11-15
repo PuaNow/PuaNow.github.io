@@ -26,7 +26,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem 1.25rem;
+      padding: 2rem 1.25rem max(5.25rem, calc(env(safe-area-inset-bottom) + 4.75rem));
       text-align: center;
     }
     main { width: min(32rem, 100%); }
@@ -74,6 +74,69 @@
       margin-top: 2.5rem;
       color: var(--muted);
       font-size: 0.85rem;
+    }
+    .eggman-link {
+      position: fixed;
+      z-index: 20;
+      right: max(0.75rem, env(safe-area-inset-right));
+      bottom: max(0.75rem, env(safe-area-inset-bottom));
+      width: 48px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      padding: 4px;
+      box-sizing: border-box;
+      border-radius: 999px;
+      background: rgba(15, 20, 16, 0.82);
+      border: 1px solid rgba(143, 188, 143, 0.5);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+      text-decoration: none;
+      transition: transform 0.15s ease, filter 0.15s ease, border-color 0.15s ease;
+    }
+    .eggman-link svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+    .eggman-link:hover,
+    .eggman-link:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.08);
+      border-color: var(--accent);
+    }
+    .eggman-link:focus {
+      outline: none;
+    }
+    .eggman-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+    .eggman-link:hover svg,
+    .eggman-link:focus-visible svg {
+      animation: egg-wiggle 0.45s ease;
+    }
+    .eggman-link:active {
+      transform: translateY(0) scale(0.96);
+    }
+    @keyframes egg-wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      35% { transform: rotate(-8deg); }
+      70% { transform: rotate(6deg); }
+    }
+    @media (max-height: 640px) {
+      body {
+        display: block;
+        padding-top: 1.35rem;
+      }
+      main { margin: 0 auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .eggman-link,
+      .eggman-link svg {
+        animation: none;
+        transition: none;
+      }
     }
     .hit-counter {
       margin-top: 1.75rem;
@@ -137,6 +200,26 @@
     </div>
     <footer>2026 &copy; Far Future Solutions LLC</footer>
   </main>
+  <a class="eggman-link" href="eggman/" aria-label="Play Egg Man" title="Play Egg Man">
+    <svg viewBox="0 0 64 80" aria-hidden="true" focusable="false">
+      <ellipse cx="32" cy="74" rx="16" ry="4" fill="#000" opacity="0.28"/>
+      <path d="M16 48 Q6 40 10 30" fill="none" stroke="#243024" stroke-width="5" stroke-linecap="round"/>
+      <path d="M16 48 Q6 40 10 30" fill="none" stroke="#f4efe4" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="M48 48 Q58 40 54 30" fill="none" stroke="#243024" stroke-width="5" stroke-linecap="round"/>
+      <path d="M48 48 Q58 40 54 30" fill="none" stroke="#f4efe4" stroke-width="3.2" stroke-linecap="round"/>
+      <ellipse cx="24" cy="70" rx="8" ry="4.2" fill="#e6d5b4" stroke="#243024" stroke-width="1.2"/>
+      <ellipse cx="42" cy="70" rx="8" ry="4.2" fill="#dcc8a0" stroke="#243024" stroke-width="1.2"/>
+      <ellipse cx="32" cy="38" rx="18" ry="24" fill="#f6f1e4" stroke="#8fbc8f" stroke-width="2"/>
+      <ellipse cx="25" cy="30" rx="7" ry="10" fill="#fff" opacity="0.35"/>
+      <ellipse cx="25" cy="36" rx="2.7" ry="3.3" fill="#1c241c"/>
+      <ellipse cx="39" cy="36" rx="2.7" ry="3.3" fill="#1c241c"/>
+      <circle cx="26" cy="34.8" r="0.9" fill="#fff"/>
+      <circle cx="40" cy="34.8" r="0.9" fill="#fff"/>
+      <ellipse cx="20.5" cy="42" rx="3" ry="1.8" fill="#e7a8ad" opacity="0.8"/>
+      <ellipse cx="43.5" cy="42" rx="3" ry="1.8" fill="#e7a8ad" opacity="0.8"/>
+      <path d="M26 46.5 Q32 51 38 46.5" fill="none" stroke="#1c241c" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </a>
   <script>
     (function () {
       var el = document.getElementById("hit-digits");
